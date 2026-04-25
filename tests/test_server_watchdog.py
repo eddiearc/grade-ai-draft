@@ -4,7 +4,7 @@ import unittest
 
 
 SERVER_PATH = Path(__file__).resolve().parents[1] / "server.py"
-SPEC = importlib.util.spec_from_file_location("ai_redraft_server", SERVER_PATH)
+SPEC = importlib.util.spec_from_file_location("grade_ai_draft_server", SERVER_PATH)
 server = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(server)
 

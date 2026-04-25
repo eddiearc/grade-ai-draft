@@ -1,31 +1,30 @@
 ---
-name: ai-redraft
-description: Use when the user wants to revise an article, post, script, memo, plan, or other prose draft by marking exact passages and giving targeted rewrite comments. Triggers include "帮我改稿", "批注改稿", "精准改稿", "这篇帮我批注后修改", "让 AI 按批注改稿", "review my draft", and content-studio draft revision.
+name: grade-ai-draft
+description: Use when the user wants to grade or revise an AI-written article, post, script, memo, plan, or other prose draft by marking exact passages and giving targeted rewrite comments. Triggers include "批改作业", "批改 AI 稿", "批改 AI 写的稿子", "帮我改稿", "批注改稿", "精准改稿", and "grade AI draft".
 ---
 
-# AI Redraft
+# 批改作业 / Grade AI Draft
 
 ## Overview
 
-This skill turns vague "帮我改一下" editing into precise human-feedback revision. The user marks exact spans in a local draft, writes rewrite comments, clicks 完成, and the agent revises the source file according to those comments.
+This skill treats an AI-written draft like homework. The human acts as the teacher: mark exact spans, write grading comments, click 完成, and let the agent revise the source file according to those comments.
 
-Use it for prose drafts, not general file review. The promise is: **人负责判断，AI 负责按位置改稿**.
+Use it for AI-generated prose drafts, not general file review. The promise is: **人类负责批改判断，Agent 负责按位置改稿**.
 
 ## When to Use
 
-Use this skill when the user wants to polish or rewrite:
+Use this skill when the user wants to grade and revise AI-written:
 
 - 小红书 / X / 公众号 / 视频口播稿
 - article drafts, newsletters, essays, memos
 - product copy, plans, proposals, README prose
-- content-studio files under `content-studio/01-内容生产/待深化的选题/`
 
 Do not use this skill for git diff review, code review, or broad-purpose annotation workflows. If the user asks for code/diff review, use a review workflow instead.
 
 ## Core Flow
 
 ```
-用户: 帮我批注改稿 <draft-file>
+用户: 用批改作业帮我批改这篇 AI 稿 <draft-file>
   ↓
 Agent resolves the absolute draft path
   ↓
@@ -45,7 +44,7 @@ Agent edits the draft in place and reports what changed
 Always use `--source`. Do not use diff mode.
 
 ```bash
-python3 ~/.agents/skills/ai-redraft/server.py --source "<ABSOLUTE_DRAFT_PATH>" --timeout 600
+python3 ~/.agents/skills/grade-ai-draft/server.py --source "<ABSOLUTE_DRAFT_PATH>" --timeout 600
 ```
 
 If `~/.agents` is not available in the current agent, use the local skill path that contains this `SKILL.md`.
@@ -55,7 +54,7 @@ If `~/.agents` is not available in the current agent, use the local skill path t
 After starting the server, tell the user:
 
 ```
-改稿批注界面已经打开，我会等你完成。
+批改作业界面已经打开，我会等你完成。
 
 操作：
 1. 划选需要修改的句子或段落
@@ -93,7 +92,7 @@ Use `context_before + selected_text + context_after` to locate the exact passage
 - Treat user comments as editorial intent, not optional suggestions.
 - Preserve the user's original meaning unless the comment asks for a stronger rewrite.
 - Prefer concrete, natural wording over polished AI-sounding summaries.
-- For content-studio drafts, follow the local anti-AI style rules: keep first-person texture, avoid fake drama, and avoid generic "不是……而是……" framing.
+- For AI-generated drafts, remove generic AI phrasing and keep the user's voice, examples, and judgment visible.
 - If a comment says "删掉", remove the selected passage unless doing so breaks necessary logic.
 - If a comment says "展开", add only details supported by the draft or known context; do not invent cases.
 - If a comment is ambiguous, make the smallest defensible edit and mention the assumption.
@@ -116,9 +115,9 @@ For 5 or fewer annotations, mention each one briefly. For more than 5, group the
 - `3`: user cancelled; do not edit
 - `4`: port conflict; retry with `--port 7891`, then `7892`
 
-## After Content-Studio Revisions
+## After Grading Revisions
 
-If the file is a content-studio draft, suggest the next concrete step:
+After applying the grading comments, suggest the next concrete step:
 
 - generate platform titles
 - turn the draft into a video outline

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-AI draft revision server.
+Grade AI Draft server.
 
-Renders one prose draft in a local browser UI, lets the user mark exact passages
-with rewrite comments, and blocks until the user clicks 完成. The browser writes
-a sidecar JSON file that the agent uses to revise the source draft.
+Renders one AI-written prose draft in a local browser UI, lets the user mark
+exact passages with grading comments, and blocks until the user clicks 完成.
+The browser writes a sidecar JSON file that the agent uses to revise the source
+draft.
 """
 
 import argparse
@@ -44,8 +45,8 @@ def open_in_browser(url):
         else:
             webbrowser.open(url)
     except Exception as exc:
-        print(f"[ai-redraft] could not auto-open browser: {exc}", file=sys.stderr)
-        print(f"[ai-redraft] please open manually: {url}", file=sys.stderr)
+        print(f"[grade-ai-draft] could not auto-open browser: {exc}", file=sys.stderr)
+        print(f"[grade-ai-draft] please open manually: {url}", file=sys.stderr)
 
 
 def read_text(path):
@@ -92,7 +93,7 @@ def exit_code_for_result(result):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Open a local AI redraft UI.")
+    parser = argparse.ArgumentParser(description="Open a local Grade AI Draft UI.")
     parser.add_argument("--port", type=int, default=0, help="Port to bind (0 = auto-pick from 7890)")
     parser.add_argument("--source", required=True, help="Absolute path to the draft file")
     parser.add_argument("--timeout", type=int, default=1800, help="Seconds to wait for completion")
@@ -114,10 +115,10 @@ def main():
     template_path = os.path.join(skill_dir, "template.html")
 
     if not os.path.exists(source_path):
-        print(f"[ai-redraft] source not found: {source_path}", file=sys.stderr)
+        print(f"[grade-ai-draft] source not found: {source_path}", file=sys.stderr)
         sys.exit(2)
     if not os.path.exists(template_path):
-        print(f"[ai-redraft] template not found: {template_path}", file=sys.stderr)
+        print(f"[grade-ai-draft] template not found: {template_path}", file=sys.stderr)
         sys.exit(2)
 
     done_event = threading.Event()
@@ -276,29 +277,29 @@ def main():
             monitor_thread = threading.Thread(target=monitor_ui_heartbeat, daemon=True)
             monitor_thread.start()
             url = f"http://localhost:{args.port}/"
-            print(f"[ai-redraft] serving {url} for {source_path}", flush=True)
+            print(f"[grade-ai-draft] serving {url} for {source_path}", flush=True)
             if not args.no_open:
                 open_in_browser(url)
-            print(f"[ai-redraft] waiting for 完成 click (timeout {args.timeout}s)...", flush=True)
+            print(f"[grade-ai-draft] waiting for 完成 click (timeout {args.timeout}s)...", flush=True)
             completed = done_event.wait(timeout=args.timeout)
             server.shutdown()
 
             if not completed:
-                print(f"[ai-redraft] timed out after {args.timeout}s", flush=True)
+                print(f"[grade-ai-draft] timed out after {args.timeout}s", flush=True)
                 sys.exit(1)
             if result_holder.get("cancelled"):
-                print("[ai-redraft] user cancelled", flush=True)
+                print("[grade-ai-draft] user cancelled", flush=True)
                 sys.exit(exit_code_for_result(result_holder))
             if result_holder.get("closed"):
-                print("[ai-redraft] browser closed before 完成: auto-shutdown", flush=True)
+                print("[grade-ai-draft] browser closed before 完成: auto-shutdown", flush=True)
                 sys.exit(exit_code_for_result(result_holder))
 
             count = result_holder.get("count", 0)
-            print(f"[ai-redraft] user clicked 完成: saved {count} comments to {sidecar_path}", flush=True)
+            print(f"[grade-ai-draft] user clicked 完成: saved {count} comments to {sidecar_path}", flush=True)
             sys.exit(exit_code_for_result(result_holder))
     except OSError as exc:
-        print(f"[ai-redraft] server error: {exc}", file=sys.stderr)
-        print(f"[ai-redraft] port {args.port} may be in use, try --port 7891", file=sys.stderr)
+        print(f"[grade-ai-draft] server error: {exc}", file=sys.stderr)
+        print(f"[grade-ai-draft] port {args.port} may be in use, try --port 7891", file=sys.stderr)
         sys.exit(4)
 
 
