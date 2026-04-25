@@ -28,7 +28,9 @@ Do not use this skill for git diff review, code review, or broad-purpose annotat
   ↓
 Agent resolves the absolute draft path
   ↓
-Agent starts the local revision UI and waits
+Agent tells the user how to operate the UI
+  ↓
+Agent starts the local revision UI in the foreground and synchronously waits
   ↓
 User highlights draft passages and writes rewrite comments
   ↓
@@ -43,6 +45,10 @@ Agent edits the draft in place and reports what changed
 
 Always use `--source`. Do not use diff mode.
 
+**Important:** run the server in the foreground and synchronously wait for it to exit. Do not launch it with `&`, `nohup`, `disown`, or a detached terminal. The UI is served by this process; if the command returns before the user clicks 完成, the browser page may stop working.
+
+Because the foreground command blocks until completion, give the user instructions **before** starting the server, not after.
+
 ```bash
 python3 ~/.agents/skills/grade-ai-draft/server.py --source "<ABSOLUTE_DRAFT_PATH>" --timeout 600
 ```
@@ -51,10 +57,10 @@ If `~/.agents` is not available in the current agent, use the local skill path t
 
 ## User Instructions
 
-After starting the server, tell the user:
+Before starting the server, tell the user:
 
 ```
-批改作业界面已经打开，我会等你完成。
+我现在会打开批改作业界面，并同步等待你完成。
 
 操作：
 1. 划选需要修改的句子或段落
@@ -62,6 +68,8 @@ After starting the server, tell the user:
 3. 全部标完点右上角「完成」
 4. 我会按你的批注直接修改原文
 ```
+
+Then start the foreground server command and wait. When it exits with code `0`, read the sidecar JSON and revise the draft.
 
 ## Annotation JSON
 
