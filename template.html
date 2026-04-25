@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>改稿批注 · {{TITLE}}</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<style>
+  /* ─────────────────────────────────────────────
+     AI draft revision · brutal editorial bench
+     Inspired by Slock's cream / ink / yellow visual rhythm,
+     translated into a quieter Chinese writing tool.
+     ───────────────────────────────────────────── */
+  :root {
+    /* Slock-like cream base, but toned down for long-form Chinese reading. */
+    --bg:        oklch(96.5% 0.028 84);
+    --paper:     oklch(99.2% 0.010 84);
+    --rail:      oklch(94.7% 0.034 84);
+    --surface:   oklch(98.1% 0.018 84);
+
+    --ink:       oklch(15.5% 0.020 60);
+    --ink-2:     oklch(31% 0.018 60);
+    --ink-3:     oklch(49% 0.014 60);
+    --ink-4:     oklch(69% 0.012 60);
+
+    --rule:      var(--ink);
+    --rule-soft: oklch(84% 0.020 72);
+
+    /* Single accent — muted editorial yellow, not neon gold. */
+    --accent:        oklch(86% 0.145 86);
+    --accent-deep:   oklch(35% 0.075 70);
+    --accent-wash:   oklch(93.5% 0.070 86);
+    --accent-wash-2: oklch(90.5% 0.095 86);
+
+    --success:   oklch(44% 0.11 150);
+    --danger:    oklch(45% 0.15 30);
+    --shadow-color: oklch(16% 0.028 60);
+    --shadow-soft: 3px 3px 0 var(--shadow-color);
+    --shadow-mid: 5px 5px 0 var(--shadow-color);
+    --shadow-rail: -3px 0 0 var(--shadow-color);
+
+    /* Type stack */
+    --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "Songti TC", "STSong", Georgia, serif;
+    --sans:  "PingFang SC", -apple-system, BlinkMacSystemFont, "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    --mono:  ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+    /* Reading rhythm */
+    /* Center the article visually, but stop before it collides with the right rail. */
+    --rail-w:   328px;
+    --read-cap: 820px;
+    --page-pad: clamp(28px, 4vw, 64px);
+    --rail-gap: clamp(24px, 3vw, 48px);
+    --read-width: min(var(--read-cap), calc(100vw - var(--rail-w) - var(--rail-gap) - 2 * var(--page-pad)));
+    --read-left: max(
+      var(--page-pad),
+      min(
+        calc((100vw - var(--read-width)) / 2),
+        calc(100vw - var(--rail-w) - var(--rail-gap) - var(--read-width))
+      )
+    );
+    --header-h: 64px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--accent); color: var(--ink); }
+
+  /* ─────────── Header ─────────── */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: var(--surface);
+    border-bottom: 2px solid var(--rule);
+    height: var(--header-h);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(16px, 3vw, 34px);
+    padding: 0 clamp(18px, 4vw, 42px);
+    box-shadow: 0 3px 0 var(--accent);
+  }
+  header::after {
+    content: none;
+  }
+  .h-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+  .h-eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    padding: 6px 9px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    background: var(--accent);
+    box-shadow: 2px 2px 0 var(--shadow-color);
+  }
+  .h-eyebrow::after {
+    content: none;
+  }
+  .h-name {
+    font-family: var(--sans);
+    font-size: clamp(14px, 0.35vw + 13px, 17px);
+    font-weight: 750;
+    color: var(--ink);
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .h-count {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    background: var(--paper);
+    font-family: var(--sans);
+    font-size: 11.5px;
+    font-weight: 650;
+    color: var(--ink);
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    box-shadow: 2px 2px 0 var(--shadow-color);
+  }
+  .h-count strong {
+    color: var(--ink);
+    font-weight: 850;
+    font-feature-settings: "tnum";
+  }
+  .header-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+  .header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Buttons — ghost by default, distinct purposes */
+  button {
+    cursor: pointer;
+    font-family: inherit;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .btn {
+    height: 36px;
+    padding: 0 15px;
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    box-shadow: 3px 3px 0 var(--shadow-color);
+    transition: background 120ms ease-out, transform 120ms ease-out, box-shadow 120ms ease-out;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0 var(--shadow-color);
+  }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow-color); }
+  .btn--ghost {
+    background: color-mix(in oklch, var(--paper) 72%, var(--rail));
+  }
+  .btn--danger { color: var(--ink-2); }
+  .btn--danger:hover { color: var(--danger); background: color-mix(in oklch, var(--danger) 9%, var(--paper)); }
+
+  .btn--primary {
+    background: var(--accent);
+    color: var(--ink);
+    border-color: var(--ink);
+    padding: 0 20px;
+  }
+  .btn--primary:hover {
+    background: color-mix(in oklch, var(--accent) 74%, var(--paper));
+    border-color: var(--ink);
+  }
+  .btn--primary[disabled] {
+    opacity: 0.5;
+    cursor: progress;
+  }
+
+  .save-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .save-hint {
+    font-family: var(--sans);
+    font-style: normal;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  @media (max-width: 720px) {
+    .save-hint { display: none; }
+  }
+
+  /* ─────────── Layout: full-viewport reading column, sidebar overlays right ─────────── */
+  main {
+    display: block;
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ─────────── Reading column ─────────── */
+  #content-wrap {
+    min-height: 100%;
+    padding-block: clamp(32px, 5vw, 68px) 200px;
+    padding-inline: 0;
+    background: var(--bg);
+    position: relative;
+    animation: rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #content {
+    width: var(--read-width);
+    max-width: none;
+    margin-left: var(--read-left);
+    margin-right: 0;
+    padding: clamp(28px, 4.2vw, 56px);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: var(--shadow-mid);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-family: var(--serif);
+    font-size: clamp(16px, 1.05vw + 12px, 18px);
+    line-height: 1.95;
+    color: var(--ink);
+    letter-spacing: 0.005em;
+    user-select: text;
+    cursor: text;
+    hanging-punctuation: first allow-end last;
+  }
+  #content-wrap.is-code-view {
+    padding-inline: clamp(20px, 3vw, 36px) calc(var(--rail-w) + 28px);
+  }
+  #content.is-code-view {
+    width: min(1360px, calc(100vw - var(--rail-w) - 72px));
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Marks — warm wash, persists clearly after selection clears */
+  #content mark {
+    background: color-mix(in oklch, var(--accent) 62%, var(--paper));
+    color: var(--ink);
+    padding: 1px 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 180ms ease-out, box-shadow 180ms ease-out;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  #content mark:hover,
+  #content mark.active {
+    background: var(--accent);
+    box-shadow: inset 0 -2px 0 0 var(--ink);
+  }
+  #content mark[data-pending="1"] {
+    background: color-mix(in oklch, var(--accent) 78%, var(--paper));
+    box-shadow: inset 0 -2px 0 0 var(--ink);
+  }
+  #content mark::after {
+    content: attr(data-seq);
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    color: var(--ink);
+    vertical-align: super;
+    line-height: 0;
+    margin-left: 3px;
+    letter-spacing: 0.04em;
+    opacity: 0.9;
+  }
+  /* Continuation marks (when one annotation spans multiple elements) skip badge */
+  #content mark[data-continuation]::after { content: none; }
+  #content mark[data-pending="1"]::after { content: none; }
+
+  /* ─────────── Rendered markdown blocks ─────────── */
+  #content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
+    font-family: var(--sans);
+    font-weight: 850;
+    color: var(--ink);
+    line-height: 1.35;
+    margin: 1.6em 0 0.6em;
+    letter-spacing: 0.005em;
+  }
+  #content h1 {
+    font-size: 1.55em;
+    margin-top: 0;
+    padding-bottom: 0.55em;
+    border-bottom: 2px solid var(--ink);
+  }
+  #content h2 { font-size: 1.3em; }
+  #content h3 { font-size: 1.12em; }
+  #content h4 { font-size: 1em; color: var(--ink-2); }
+  #content h5, #content h6 { font-size: 0.95em; color: var(--ink-2); }
+
+  #content p {
+    margin: 0 0 1.1em;
+  }
+  #content p:last-child { margin-bottom: 0; }
+
+  #content blockquote {
+    margin: 1.4em 0;
+    padding: 14px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: color-mix(in oklch, var(--accent) 28%, var(--paper));
+    color: var(--ink);
+    font-style: italic;
+    box-shadow: 3px 3px 0 var(--shadow-color);
+  }
+  #content blockquote p { margin-bottom: 0.5em; }
+  #content blockquote p:last-child { margin-bottom: 0; }
+
+  #content ul, #content ol {
+    margin: 0.8em 0 1.2em;
+    padding-left: 1.6em;
+  }
+  #content li {
+    margin-bottom: 0.3em;
+    padding-left: 0.2em;
+  }
+  #content ul li::marker { color: var(--accent); }
+
+  #content hr {
+    border: 0;
+    height: 2px;
+    background: var(--ink);
+    margin: 2em 0;
+  }
+  #content hr.divider {
+    background: transparent;
+    text-align: center;
+    height: auto;
+  }
+  #content hr.divider::before {
+    content: "·  ·  ·";
+    color: var(--ink-4);
+    letter-spacing: 0.4em;
+    font-size: 0.9em;
+  }
+
+  #content code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: color-mix(in oklch, var(--accent) 36%, var(--paper));
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--ink);
+    border: 1px solid color-mix(in oklch, var(--ink) 34%, transparent);
+  }
+  #content pre {
+    background: color-mix(in oklch, var(--rail) 80%, var(--paper));
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 1.2em 0;
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+  #content pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--ink);
+    font-size: inherit;
+    display: block;
+  }
+  #content pre code.hljs {
+    background: transparent !important;
+    padding: 0;
+  }
+  #content a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent);
+    transition: border-color 160ms ease-out;
+  }
+  #content a:hover { border-bottom-color: var(--ink); }
+
+  #content strong { font-weight: 600; color: var(--ink); }
+  #content em { font-style: italic; }
+
+  /* ─────────── Annotation rail (fixed overlay on right) ─────────── */
+  #rail-handle {
+    position: fixed;
+    top: var(--header-h);
+    right: calc(var(--rail-w) - 6px);
+    width: 12px;
+    height: calc(100vh - var(--header-h));
+    cursor: col-resize;
+    z-index: 6;
+    touch-action: none;
+  }
+  #rail-handle::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 88px;
+    border-radius: 3px;
+    transform: translate(-50%, -50%);
+    background: color-mix(in oklch, var(--ink) 34%, transparent);
+    transition: background 160ms ease-out, transform 160ms ease-out;
+  }
+  #rail-handle:hover::before,
+  #rail-handle.is-dragging::before {
+    background: color-mix(in oklch, var(--accent) 60%, transparent);
+    transform: translate(-50%, -50%) scaleX(1.15);
+  }
+  #sidebar {
+    position: fixed;
+    top: var(--header-h);
+    right: 0;
+    width: var(--rail-w);
+    height: calc(100vh - var(--header-h));
+    background: var(--rail);
+    border-left: 1px solid var(--rule);
+    padding: clamp(24px, 3.2vw, 38px) clamp(18px, 2.2vw, 28px) 96px;
+    overflow-y: auto;
+    z-index: 5;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink-4) transparent;
+    box-shadow: var(--shadow-rail);
+  }
+  #sidebar::-webkit-scrollbar { width: 8px; }
+  #sidebar::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--ink-4) 40%, transparent);
+    border-radius: 999px;
+  }
+  @media (max-width: 880px) {
+    /* Stack on narrow screens: rail moves below content, content uses full width. */
+    :root {
+      --rail-w: 0px;
+      --rail-gap: 0px;
+    }
+    #rail-handle { display: none; }
+    #content {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #content-wrap.is-code-view {
+      padding-right: clamp(20px, 5vw, 56px);
+    }
+    #content.is-code-view {
+      width: 100%;
+    }
+    #sidebar {
+      position: static;
+      width: 100%;
+      height: auto;
+      border-left: 0;
+      border-top: 1px solid var(--rule);
+      padding: 32px 20px 80px;
+      box-shadow: none;
+    }
+  }
+
+  .rail-title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
+    font-weight: 400;
+  }
+  .rail-title .label {
+    font-family: var(--sans);
+    font-style: normal;
+    font-size: 20px;
+    font-weight: 850;
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: 0;
+  }
+  .rail-title .num {
+    min-width: 34px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: var(--accent);
+    box-shadow: 2px 2px 0 var(--shadow-color);
+  }
+  .rail-kicker {
+    margin: 8px 0 18px;
+    color: var(--ink-3);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .rail-meta {
+    margin: 0 0 24px;
+    padding: 12px;
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    background: var(--paper);
+    font-family: var(--sans);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--ink-3);
+    word-break: break-all;
+    box-shadow: var(--shadow-soft);
+  }
+  .rail-meta dt {
+    display: block;
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-4);
+    margin: 0 0 2px;
+    font-size: 9.5px;
+  }
+  .rail-meta dd {
+    display: block;
+    margin: 0 0 10px 0;
+    color: var(--ink-2);
+  }
+  .rail-meta dd:last-child { margin-bottom: 0; }
+  .rail-meta strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* Empty state — quiet, instructive, not decorative */
+  .empty {
+    padding: 22px 18px;
+    color: var(--ink-2);
+    font-family: var(--serif);
+    font-size: 14px;
+    font-style: italic;
+    line-height: 1.8;
+    letter-spacing: 0;
+    border: 2px dashed var(--ink);
+    border-radius: 8px;
+    background: color-mix(in oklch, var(--accent) 20%, var(--paper));
+  }
+  .empty .step {
+    display: block;
+    font-style: normal;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--ink-2);
+    margin-top: 4px;
+  }
+  .empty .step::before {
+    content: "↳";
+    margin-right: 8px;
+    color: var(--ink-4);
+  }
+
+  /* Annotation entries — typographic, no card chrome */
+  .ann {
+    padding: 15px 15px 16px;
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    background: var(--paper);
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
+    position: relative;
+    transition: border-color 180ms ease-out, background 180ms ease-out, transform 180ms ease-out, box-shadow 180ms ease-out;
+  }
+  #ann-list {
+    display: grid;
+    gap: 12px;
+  }
+  .ann:first-child { padding-top: 15px; }
+  .ann:last-child { border-bottom: 2px solid var(--rule); }
+  .ann:hover, .ann.active {
+    border-color: var(--ink);
+    background: color-mix(in oklch, var(--accent) 28%, var(--paper));
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0 var(--shadow-color);
+  }
+
+  .ann-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .ann-seq {
+    font-family: var(--sans);
+    font-size: 10px;
+    color: var(--ink);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  .ann-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+  }
+  .ann:hover .ann-actions, .ann.active .ann-actions { opacity: 1; }
+  .ann-actions button {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    padding: 3px 7px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: color 160ms, background 160ms;
+    letter-spacing: 0.02em;
+  }
+  .ann-actions button:hover {
+    color: var(--ink);
+    background: var(--accent);
+    border-color: var(--ink);
+  }
+  .ann-actions button[data-action="delete"]:hover {
+    color: var(--danger);
+    background: color-mix(in oklch, var(--danger) 8%, transparent);
+  }
+
+  .ann-quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-3);
+    line-height: 1.6;
+    margin: 0 0 10px;
+    padding-left: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ann-note {
+    font-family: var(--sans);
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.65;
+    margin: 0;
+    padding-top: 10px;
+    border-top: 2px solid var(--rule-soft);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* ─────────── Floating selection popup ─────────── */
+  #popup {
+    position: absolute;
+    z-index: 100;
+    display: none;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 8px;
+    padding: 4px;
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--shadow-color);
+    animation: popIn 140ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    transform-origin: top left;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.92) translateY(-2px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  #popup.with-textarea {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 14px;
+    width: 340px;
+    border: 2px solid var(--rule);
+    box-shadow: 5px 5px 0 var(--shadow-color);
+  }
+
+  #popup .pop-trigger {
+    background: transparent;
+    color: var(--paper);
+    padding: 6px 12px;
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    border-radius: 4px;
+    transition: background 140ms ease-out;
+  }
+  #popup .pop-trigger:hover {
+    background: color-mix(in oklch, var(--paper) 12%, transparent);
+  }
+  #popup .pop-trigger .plus {
+    color: var(--accent);
+    margin-right: 4px;
+    font-weight: 500;
+  }
+
+  #popup .popup-preview {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    line-height: 1.55;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    background: color-mix(in oklch, var(--accent) 22%, var(--paper));
+    max-height: 4em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  #popup textarea {
+    width: 100%;
+    min-height: 88px;
+    background: var(--rail);
+    color: var(--ink);
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: var(--sans);
+    line-height: 1.6;
+    resize: vertical;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    transition: border-color 160ms ease-out, background 160ms ease-out;
+  }
+  #popup textarea:focus {
+    outline: none;
+    border-color: var(--ink);
+    background: var(--paper);
+    box-shadow: 3px 3px 0 var(--shadow-color);
+  }
+  #popup textarea::placeholder {
+    color: var(--ink-4);
+    font-style: italic;
+  }
+  #popup .popup-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  #popup .pop-hint {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+  #popup .pop-hint kbd {
+    color: var(--ink-2);
+    font-family: var(--mono);
+    background: color-mix(in oklch, var(--ink) 6%, transparent);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+  }
+  #popup .pop-buttons { display: flex; gap: 6px; }
+  #popup .pop-btn {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--sans);
+    letter-spacing: 0.01em;
+    border: 2px solid var(--rule);
+    background: transparent;
+    color: var(--ink-2);
+    transition: color 140ms, border-color 140ms, background 140ms;
+  }
+  #popup .pop-btn:hover { color: var(--ink); border-color: var(--ink-4); }
+  #popup .pop-btn.is-confirm {
+    background: var(--accent);
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+  #popup .pop-btn.is-confirm:hover {
+    background: color-mix(in oklch, var(--accent) 72%, var(--paper));
+    border-color: var(--ink);
+  }
+
+  /* ─────────── In-page dialog ─────────── */
+  [data-dialog-root] {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: none;
+  }
+  [data-dialog-root].is-open { display: block; }
+  .dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklch, var(--ink) 24%, transparent);
+  }
+  .dialog-shell {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  .dialog-card {
+    width: min(92vw, 420px);
+    background: var(--paper);
+    border: 2px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: 6px 6px 0 var(--shadow-color);
+    padding: 24px 24px 20px;
+    animation: popIn 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .dialog-title {
+    margin: 0 0 8px;
+    font-family: var(--sans);
+    font-size: 19px;
+    font-style: normal;
+    font-weight: 850;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+  .dialog-body {
+    margin: 0 0 16px;
+    color: var(--ink-2);
+    line-height: 1.65;
+    font-size: 13.5px;
+  }
+  .dialog-body strong { color: var(--ink); font-weight: 600; }
+  .dialog-input {
+    width: 100%;
+    min-height: 96px;
+    margin: 0 0 16px;
+    border: 2px solid var(--rule);
+    border-radius: 10px;
+    background: var(--rail);
+    color: var(--ink);
+    padding: 12px 14px;
+    resize: vertical;
+    line-height: 1.6;
+    font-size: 14px;
+    transition: border-color 160ms ease-out, background 160ms ease-out;
+  }
+  .dialog-input:focus {
+    outline: none;
+    border-color: var(--ink);
+    background: var(--paper);
+    box-shadow: 3px 3px 0 var(--shadow-color);
+  }
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .dialog-actions .btn {
+    height: 36px;
+    padding-inline: 16px;
+  }
+  .dialog-actions .btn--danger-solid {
+    background: color-mix(in oklch, var(--danger) 88%, var(--paper));
+    color: var(--paper);
+    border-color: color-mix(in oklch, var(--danger) 90%, var(--ink));
+  }
+  .dialog-actions .btn--danger-solid:hover {
+    background: color-mix(in oklch, var(--danger) 82%, var(--ink));
+    border-color: color-mix(in oklch, var(--danger) 82%, var(--ink));
+    color: var(--paper);
+  }
+
+  /* ─────────── Toast ─────────── */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translate(-50%, 8px);
+    background: var(--accent);
+    color: var(--ink);
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 2px solid var(--ink);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    box-shadow: 4px 4px 0 var(--shadow-color);
+    opacity: 0;
+    transition: opacity 240ms ease-out, transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    pointer-events: none;
+    z-index: 200;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ─────────── Success overlay ─────────── */
+  #success-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: color-mix(in oklch, var(--bg) 92%, transparent);
+    display: grid;
+    place-items: center;
+    animation: fadeIn 360ms ease-out both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .success-card {
+    width: min(92vw, 420px);
+    text-align: center;
+    padding: 56px 48px 48px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: 6px 6px 0 var(--shadow-color);
+    animation: cardIn 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .success-mark {
+    font-family: var(--sans);
+    font-size: 36px;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 24px;
+    letter-spacing: 0.04em;
+  }
+  .success-mark span { display: inline-block; animation: drawIn 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  @keyframes drawIn {
+    from { opacity: 0; transform: translateY(-6px); letter-spacing: 0.6em; }
+    to   { opacity: 1; transform: translateY(0); letter-spacing: 0.04em; }
+  }
+  .success-card h2 {
+    font-family: var(--sans);
+    font-style: normal;
+    font-weight: 850;
+    font-size: 26px;
+    color: var(--ink);
+    margin: 0 0 12px;
+    letter-spacing: 0.01em;
+  }
+  .success-card .meta {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-2);
+    margin: 0 0 32px;
+    line-height: 1.6;
+  }
+  .success-card .meta b {
+    font-weight: 500;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .success-card .countdown {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .success-card #cd {
+    display: inline-block;
+    min-width: 1ch;
+    color: var(--accent-deep);
+    font-variant-numeric: tabular-nums;
+  }
+  .success-card .manual-hint {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 11.5px;
+    color: var(--ink-4);
+    margin: 14px 0 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-title">
+    <span class="h-eyebrow">AI 改稿</span>
+    <span class="h-name">{{TITLE}}</span>
+  </div>
+  <div class="header-controls">
+    <span class="h-count"><strong id="count-badge">0</strong><span>条修改意见</span></span>
+    <div class="header-actions">
+      <button id="clear-btn" class="btn btn--danger btn--ghost" title="清空所有修改意见">清空</button>
+      <div class="save-wrap">
+        <span class="save-hint">完成后交给 Agent 改稿</span>
+        <button id="save-btn" class="btn btn--primary">完成</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <article id="content-wrap">
+    <div id="content"></div>
+  </article>
+  <script type="text/markdown" id="md-src">{{CONTENT}}</script>
+
+  <aside id="sidebar">
+    <h2 class="rail-title">
+      <span class="label">修改意见</span>
+      <span class="num"><span id="sidebar-count">0</span></span>
+    </h2>
+    <p class="rail-kicker">划选原文，把判断留在具体句子旁边。</p>
+    <dl class="rail-meta">
+      <dt>稿件</dt><dd>{{TITLE}}</dd>
+      <dt>状态</dt><dd><strong>点击完成后交给 Agent</strong></dd>
+    </dl>
+    <div id="ann-list"></div>
+  </aside>
+  <div id="rail-handle" aria-hidden="true"></div>
+</main>
+
+<div id="popup"></div>
+<div id="toast"></div>
+<div data-dialog-root></div>
+
+<script>
+const SOURCE_PATH = "{{SOURCE_PATH}}";
+const SOURCE_NAME = "{{TITLE}}";
+const STORAGE_KEY = "ai-redraft:" + SOURCE_PATH;
+const RAIL_WIDTH_KEY = "ai-redraft:rail-width";
+
+let annotations = [];
+let nextId = 1;
+let currentRange = null;
+let currentSelectionMeta = null;
+let currentPendingId = null;
+let currentPopupRect = null;
+let lastPointer = null;
+let doneFired = false;
+let saveTimer = null;
+let heartbeatTimer = null;
+
+const contentEl = document.getElementById("content");
+const popup = document.getElementById("popup");
+const annList = document.getElementById("ann-list");
+const countBadge = document.getElementById("count-badge");
+const sidebarCount = document.getElementById("sidebar-count");
+const toast = document.getElementById("toast");
+const dialogRoot = document.querySelector("[data-dialog-root]");
+const contentWrapEl = document.getElementById("content-wrap");
+const railHandleEl = document.getElementById("rail-handle");
+const rootStyle = document.documentElement;
+
+const EMPTY_HTML = `<div class="empty">划选需要修改的字句，写下改稿意见。</div>`;
+
+// ---------- Toast ----------
+function showToast(msg, ms = 2200) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("show"), ms);
+}
+
+function closeDialog(result = null) {
+  if (!dialogRoot._resolver) return;
+  const resolver = dialogRoot._resolver;
+  dialogRoot._resolver = null;
+  dialogRoot.classList.remove("is-open");
+  dialogRoot.innerHTML = "";
+  resolver(result);
+}
+
+function openDialog({ title, body, mode = "confirm", confirmLabel = "确定", cancelLabel = "取消", danger = false, value = "", placeholder = "" }) {
+  return new Promise((resolve) => {
+    dialogRoot._resolver = resolve;
+    const confirmClass = danger ? "btn btn--danger-solid" : "btn btn--primary";
+    dialogRoot.innerHTML = `
+      <div class="dialog-backdrop" data-dialog-action="cancel"></div>
+      <div class="dialog-shell">
+        <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+          <h3 class="dialog-title" id="dialog-title">${escapeHtml(title)}</h3>
+          ${body ? `<p class="dialog-body">${body}</p>` : ""}
+          ${mode === "prompt" ? `<textarea class="dialog-input" placeholder="${escapeHtml(placeholder)}">${escapeHtml(value)}</textarea>` : ""}
+          <div class="dialog-actions">
+            <button class="btn btn--ghost" data-dialog-action="cancel">${escapeHtml(cancelLabel)}</button>
+            <button class="${confirmClass}" data-dialog-action="confirm">${escapeHtml(confirmLabel)}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    dialogRoot.classList.add("is-open");
+
+    const input = dialogRoot.querySelector(".dialog-input");
+    if (input) {
+      requestAnimationFrame(() => {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      });
+      input.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+          e.preventDefault();
+          closeDialog(input.value);
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeDialog(null);
+        }
+      });
+    }
+
+    dialogRoot.querySelectorAll("[data-dialog-action]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const action = el.getAttribute("data-dialog-action");
+        if (action === "confirm") {
+          closeDialog(input ? input.value : true);
+        } else {
+          closeDialog(null);
+        }
+      });
+    });
+  });
+}
+
+// ---------- Persistence ----------
+function buildPayload() {
+  return {
+    source_file: SOURCE_PATH,
+    source_name: SOURCE_NAME,
+    created_at: new Date().toISOString(),
+    annotations: annotations.map(a => ({
+      id: a.id,
+      seq: a.seq,
+      selected_text: a.selected_text,
+      context_before: a.context_before,
+      context_after: a.context_after,
+      note: a.note,
+      created_at: a.created_at
+    }))
+  };
+}
+
+function scheduleServerSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(serverSave, 250);
+}
+
+async function serverSave() {
+  if (doneFired) return;
+  try {
+    await fetch("/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildPayload())
+    });
+  } catch(e) { /* silent; localStorage is the safety net */ }
+}
+
+function sendHeartbeat() {
+  if (doneFired) return;
+  try {
+    fetch("/heartbeat", { method: "POST", keepalive: true }).catch(() => {});
+  } catch (e) { /* best effort */ }
+}
+
+function startBrowserHeartbeat() {
+  sendHeartbeat();
+  heartbeatTimer = setInterval(sendHeartbeat, 2500);
+}
+
+function saveLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ annotations, nextId }));
+  scheduleServerSave();
+}
+function loadLocal() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (!s) {
+      renderSidebar();
+      return;
+    }
+    const data = JSON.parse(s);
+    annotations = data.annotations || [];
+    nextId = data.nextId || (annotations.length + 1);
+    annotations.forEach(ann => reapplyMark(ann));
+    renderSidebar();
+  } catch(e) {
+    console.error(e);
+    renderSidebar();
+  }
+}
+
+// ---------- Highlight / mark ----------
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function wireMark(mark, annId) {
+  mark.addEventListener("mouseenter", () => {
+    highlightMark(annId, true);
+    highlightCard(annId, true);
+  });
+  mark.addEventListener("mouseleave", () => {
+    highlightMark(annId, false);
+    highlightCard(annId, false);
+  });
+  mark.addEventListener("click", () => scrollToCard(annId));
+}
+
+// Wrap a range that may span across multiple elements (h1, p, strong, etc).
+// Walks through every text node intersecting the range and wraps the
+// intersected portion with its own <mark>; only the first one shows the
+// numbered badge.
+function wrapRangeWithMark(range, annId, seq, opts = {}) {
+  const seqStr = seq != null ? pad2(seq) : "";
+  const startNode = range.startContainer;
+  const endNode = range.endContainer;
+
+  // Collect all text nodes that intersect the range. Using intersectsNode
+  // handles BOTH text-node and element-node range endpoints uniformly
+  // (Range.selectNodeContents on an element produces an element-typed
+  // startContainer/endContainer; an identity-match walk would miss those).
+  const textNodes = [];
+  const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT, null);
+  let n;
+  while ((n = walker.nextNode())) {
+    if (range.intersectsNode(n)) textNodes.push(n);
+  }
+  if (!textNodes.length) return;
+
+  const created = [];
+  textNodes.forEach((node, idx) => {
+    if (node.nodeType !== Node.TEXT_NODE || !node.parentNode) return;
+    const text = node.textContent;
+    const start = (node === startNode) ? range.startOffset : 0;
+    const end = (node === endNode) ? range.endOffset : text.length;
+    if (end <= start) return;
+
+    const before = text.slice(0, start);
+    const middle = text.slice(start, end);
+    const after = text.slice(end);
+    if (!middle) return;
+
+    const mark = document.createElement("mark");
+    if (opts.pending) {
+      mark.dataset.pending = "1";
+      mark.dataset.pendingId = annId;
+    } else {
+      mark.dataset.annId = annId;
+      mark.dataset.seq = seqStr;
+    }
+    if (created.length > 0) mark.dataset.continuation = "1";
+    mark.textContent = middle;
+
+    const frag = document.createDocumentFragment();
+    if (before) frag.appendChild(document.createTextNode(before));
+    frag.appendChild(mark);
+    if (after) frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag, node);
+    created.push(mark);
+  });
+
+  if (!opts.pending) created.forEach(m => wireMark(m, annId));
+  return created[0];
+}
+
+function clearPendingHighlight() {
+  if (!currentPendingId) return;
+  contentEl.querySelectorAll(`mark[data-pending-id="${currentPendingId}"]`).forEach(m => {
+    const parent = m.parentNode;
+    while (m.firstChild) parent.insertBefore(m.firstChild, m);
+    parent.removeChild(m);
+    parent.normalize();
+  });
+  currentPendingId = null;
+}
+
+function applyPendingHighlight(range) {
+  clearPendingHighlight();
+  currentPendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  wrapRangeWithMark(range, currentPendingId, null, { pending: true });
+}
+
+function finalizePendingHighlight(annId, seq) {
+  if (!currentPendingId) return;
+  contentEl.querySelectorAll(`mark[data-pending-id="${currentPendingId}"]`).forEach(m => {
+    delete m.dataset.pending;
+    delete m.dataset.pendingId;
+    m.dataset.annId = annId;
+    m.dataset.seq = pad2(seq);
+    wireMark(m, annId);
+  });
+  currentPendingId = null;
+}
+
+function reapplyMark(ann) {
+  const full = contentEl.textContent;
+  const search = ann.context_before + ann.selected_text + ann.context_after;
+  const idx = full.indexOf(search);
+  if (idx < 0) {
+    const idx2 = full.indexOf(ann.selected_text);
+    if (idx2 < 0) return;
+    wrapTextOffset(idx2, ann.selected_text.length, ann.id, ann.seq);
+  } else {
+    wrapTextOffset(idx + ann.context_before.length, ann.selected_text.length, ann.id, ann.seq);
+  }
+}
+
+function wrapTextOffset(start, length, annId, seq) {
+  const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT);
+  let pos = 0, startNode = null, startOff = 0, endNode = null, endOff = 0;
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const len = node.textContent.length;
+    if (!startNode && pos + len > start) {
+      startNode = node;
+      startOff = start - pos;
+    }
+    if (startNode && pos + len >= start + length) {
+      endNode = node;
+      endOff = (start + length) - pos;
+      break;
+    }
+    pos += len;
+  }
+  if (!startNode || !endNode) return;
+  const range = document.createRange();
+  range.setStart(startNode, startOff);
+  range.setEnd(endNode, endOff);
+  wrapRangeWithMark(range, annId, seq);
+}
+
+// ---------- Selection → popup ----------
+function getSelectionRange() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return null;
+  if (!contentEl.contains(range.commonAncestorContainer)) return null;
+  return range;
+}
+
+function showInitialPopup(range) {
+  const text = range.toString().trim();
+  if (!text) return;
+  const rect = range.getBoundingClientRect();
+  const left = lastPointer ? lastPointer.clientX : rect.left;
+  const top = lastPointer ? lastPointer.clientY - 10 : rect.top;
+  const bottom = lastPointer ? lastPointer.clientY : rect.bottom;
+  currentPopupRect = {
+    left,
+    top,
+    right: lastPointer ? lastPointer.clientX : rect.right,
+    bottom,
+    width: rect.width,
+    height: rect.height,
+  };
+  popup.className = "";
+  popup.innerHTML = `<button class="pop-trigger" id="start-ann"><span class="plus">+</span>改稿意见</button>`;
+  popup.style.display = "block";
+  positionPopup(currentPopupRect);
+  document.getElementById("start-ann").onclick = () => showTextareaPopup(range);
+}
+
+function showTextareaPopup(range) {
+  currentRange = range.cloneRange();
+  currentSelectionMeta = {
+    text: range.toString(),
+    ctx: getContext(range, 30),
+  };
+  applyPendingHighlight(range.cloneRange());
+  const text = range.toString();
+  popup.className = "with-textarea";
+  popup.innerHTML = `
+    <div class="popup-preview">${escapeHtml(text)}</div>
+    <textarea id="note-input" placeholder="写下你的想法…"></textarea>
+    <div class="popup-actions">
+      <span class="pop-hint"><kbd>⌘</kbd> + <kbd>↵</kbd> 提交</span>
+      <div class="pop-buttons">
+        <button class="pop-btn" id="cancel-btn">取消</button>
+        <button class="pop-btn is-confirm" id="confirm-btn">添加</button>
+      </div>
+    </div>
+  `;
+  const rect = currentPopupRect || range.getBoundingClientRect();
+  positionPopup(rect);
+  const ta = document.getElementById("note-input");
+  ta.focus();
+  ta.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      confirmAnnotation();
+    }
+    if (e.key === "Escape") hidePopup();
+  });
+  document.getElementById("confirm-btn").onclick = confirmAnnotation;
+  document.getElementById("cancel-btn").onclick = hidePopup;
+}
+
+function positionPopup(rect) {
+  const popupWidth = popup.offsetWidth || 200;
+  const margin = 12;
+  let px = rect.left + window.scrollX;
+  if (px + popupWidth + margin > window.innerWidth + window.scrollX) {
+    px = window.innerWidth + window.scrollX - popupWidth - margin;
+  }
+  px = Math.max(margin, px);
+  const py = rect.bottom + window.scrollY + 10;
+  popup.style.left = px + "px";
+  popup.style.top = py + "px";
+}
+
+function hidePopup() {
+  popup.style.display = "none";
+  currentRange = null;
+  currentSelectionMeta = null;
+  currentPopupRect = null;
+  clearPendingHighlight();
+  window.getSelection().removeAllRanges();
+}
+
+function confirmAnnotation() {
+  if (!currentRange || !currentSelectionMeta) return hidePopup();
+  const note = document.getElementById("note-input").value.trim();
+  if (!note) {
+    showToast("请写下改稿意见");
+    return;
+  }
+  const selectedText = currentSelectionMeta.text;
+  const ctx = currentSelectionMeta.ctx;
+  const seq = nextId++;
+  const id = "ann-" + seq;
+  const ann = {
+    id, seq,
+    selected_text: selectedText,
+    context_before: ctx.before,
+    context_after: ctx.after,
+    note,
+    created_at: new Date().toISOString()
+  };
+  annotations.push(ann);
+  finalizePendingHighlight(id, seq);
+  saveLocal();
+  renderSidebar();
+  currentRange = null;
+  currentSelectionMeta = null;
+  hidePopup();
+  showToast(`已添加 · 第 ${seq} 条`);
+}
+
+function getContext(range, limit) {
+  const startNode = range.startContainer;
+  const endNode = range.endContainer;
+  let before = "";
+  let after = "";
+  if (startNode.nodeType === Node.TEXT_NODE) {
+    before = startNode.textContent.slice(Math.max(0, range.startOffset - limit), range.startOffset);
+  }
+  if (endNode.nodeType === Node.TEXT_NODE) {
+    after = endNode.textContent.slice(range.endOffset, range.endOffset + limit);
+  }
+  return { before, after };
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);
+}
+
+function extname(name) {
+  const m = String(name).toLowerCase().match(/\.([a-z0-9_+-]+)$/);
+  return m ? m[1] : "";
+}
+
+function basename(name) {
+  return String(name).split("/").pop() || String(name);
+}
+
+function isProseFile(name) {
+  return /(?:^|\.)(md|markdown|txt|rst)$/i.test(String(name));
+}
+
+function codeLangFor(name) {
+  const base = basename(name).toLowerCase();
+  if (base === "dockerfile") return "dockerfile";
+  if (base === "makefile") return "makefile";
+  if (base === ".env" || base.startsWith(".env.")) return "dotenv";
+  if (base === "nginx.conf") return "nginx";
+  if (base === "requirements.txt") return "requirements";
+
+  const ext = extname(name);
+  const map = {
+    js: "javascript",
+    mjs: "javascript",
+    cjs: "javascript",
+    ts: "typescript",
+    tsx: "tsx",
+    jsx: "jsx",
+    py: "python",
+    rb: "ruby",
+    go: "go",
+    rs: "rust",
+    java: "java",
+    kt: "kotlin",
+    swift: "swift",
+    php: "php",
+    sh: "bash",
+    zsh: "bash",
+    bash: "bash",
+    json: "json",
+    html: "html",
+    css: "css",
+    scss: "scss",
+    yaml: "yaml",
+    yml: "yaml",
+    toml: "toml",
+    xml: "xml",
+    sql: "sql",
+    c: "c",
+    h: "c",
+    cpp: "cpp",
+    cc: "cpp",
+    hpp: "cpp",
+  };
+  return map[ext] || ext || "text";
+}
+
+function renderSource(src, sourcePath) {
+  if (isProseFile(sourcePath)) return mdToHtml(src);
+  const lang = codeLangFor(sourcePath);
+  return `<pre><code data-lang="${escapeHtml(lang)}">${escapeHtml(String(src).replace(/\n$/, ""))}</code></pre>`;
+}
+
+function applyCodeHighlighting() {
+  if (typeof hljs === "undefined") return;
+  contentEl.querySelectorAll("pre code").forEach((block) => {
+    try {
+      hljs.highlightElement(block);
+    } catch (_) {}
+  });
+}
+
+function clampRailWidth(width) {
+  return Math.max(240, Math.min(520, width));
+}
+
+function setRailWidth(width, persist = true) {
+  const next = clampRailWidth(width);
+  rootStyle.style.setProperty("--rail-w", `${next}px`);
+  if (persist) localStorage.setItem(RAIL_WIDTH_KEY, String(next));
+}
+
+function initRailResize() {
+  if (!railHandleEl) return;
+
+  const saved = parseFloat(localStorage.getItem(RAIL_WIDTH_KEY) || "");
+  if (!Number.isNaN(saved) && window.innerWidth > 880) setRailWidth(saved, false);
+
+  let dragging = false;
+
+  const move = (event) => {
+    if (!dragging) return;
+    const next = window.innerWidth - event.clientX;
+    setRailWidth(next);
+  };
+  const stop = () => {
+    if (!dragging) return;
+    dragging = false;
+    railHandleEl.classList.remove("is-dragging");
+    document.body.style.userSelect = "";
+  };
+
+  railHandleEl.addEventListener("pointerdown", (event) => {
+    if (window.innerWidth <= 880) return;
+    dragging = true;
+    railHandleEl.classList.add("is-dragging");
+    document.body.style.userSelect = "none";
+    railHandleEl.setPointerCapture?.(event.pointerId);
+  });
+
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", stop);
+  window.addEventListener("pointercancel", stop);
+}
+
+// ---------- Sidebar rendering ----------
+function renderSidebar() {
+  const n = annotations.length;
+  sidebarCount.textContent = pad2(n);
+  countBadge.textContent = n;
+  if (n === 0) {
+    annList.innerHTML = EMPTY_HTML;
+    return;
+  }
+  annList.innerHTML = annotations.map(a => `
+    <div class="ann" data-ann-id="${a.id}">
+      <div class="ann-head">
+        <span class="ann-seq">№&nbsp;${pad2(a.seq)}</span>
+        <span class="ann-actions">
+          <button data-action="edit" data-id="${a.id}">编辑</button>
+          <button data-action="delete" data-id="${a.id}">删除</button>
+        </span>
+      </div>
+      <p class="ann-quote">${escapeHtml(a.selected_text)}</p>
+      <p class="ann-note">${escapeHtml(a.note)}</p>
+    </div>
+  `).join("");
+  annList.querySelectorAll(".ann").forEach(card => {
+    card.addEventListener("mouseenter", () => highlightMark(card.dataset.annId, true));
+    card.addEventListener("mouseleave", () => highlightMark(card.dataset.annId, false));
+    card.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON") return;
+      scrollToMark(card.dataset.annId);
+    });
+  });
+  annList.querySelectorAll("button[data-action]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if (btn.dataset.action === "delete") deleteAnnotation(id);
+      if (btn.dataset.action === "edit") editAnnotation(id);
+    });
+  });
+}
+
+function highlightMark(annId, on) {
+  contentEl.querySelectorAll(`mark[data-ann-id="${annId}"]`).forEach(m => m.classList.toggle("active", on));
+}
+function highlightCard(annId, on) {
+  const c = annList.querySelector(`.ann[data-ann-id="${annId}"]`);
+  if (c) c.classList.toggle("active", on);
+}
+function scrollToMark(annId) {
+  const m = contentEl.querySelector(`mark[data-ann-id="${annId}"]`);
+  if (m) m.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function scrollToCard(annId) {
+  const c = annList.querySelector(`.ann[data-ann-id="${annId}"]`);
+  if (c) {
+    c.scrollIntoView({ behavior: "smooth", block: "center" });
+    c.classList.add("active");
+    setTimeout(() => c.classList.remove("active"), 1500);
+  }
+}
+
+async function deleteAnnotation(id) {
+  const confirmed = await openDialog({
+    title: "删除这条修改意见？",
+    body: "这条修改意见会从正文和右侧栏里一起移除。",
+    confirmLabel: "删除",
+    cancelLabel: "保留",
+    danger: true,
+  });
+  if (!confirmed) return;
+  const m = contentEl.querySelector(`mark[data-ann-id="${id}"]`);
+  if (m) {
+    const parent = m.parentNode;
+    while (m.firstChild) parent.insertBefore(m.firstChild, m);
+    parent.removeChild(m);
+    parent.normalize();
+  }
+  annotations = annotations.filter(a => a.id !== id);
+  saveLocal();
+  renderSidebar();
+  showToast("已删除");
+}
+
+async function editAnnotation(id) {
+  const ann = annotations.find(a => a.id === id);
+  if (!ann) return;
+  const next = await openDialog({
+    title: "编辑修改意见",
+    body: "修改这条改稿意见。",
+    mode: "prompt",
+    confirmLabel: "保存",
+    cancelLabel: "取消",
+    value: ann.note,
+    placeholder: "写下你的想法…",
+  });
+  if (next === null) return;
+  const trimmed = next.trim();
+  if (!trimmed) return showToast("内容不能为空");
+  ann.note = trimmed;
+  saveLocal();
+  renderSidebar();
+  showToast("已更新");
+}
+
+// ---------- Complete ----------
+async function completeAnnotation() {
+  if (annotations.length === 0) {
+    const confirmed = await openDialog({
+      title: "还没有修改意见",
+      body: "确认直接完成吗？这次不会保存任何改稿意见。",
+      confirmLabel: "直接完成",
+      cancelLabel: "继续看看",
+    });
+    if (!confirmed) return;
+  }
+  const btn = document.getElementById("save-btn");
+  btn.disabled = true;
+  btn.textContent = "提交中…";
+  doneFired = true;
+  clearInterval(heartbeatTimer);
+  try {
+    const resp = await fetch("/done", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildPayload())
+    });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    localStorage.removeItem(STORAGE_KEY);
+    showSuccessAndClose(annotations.length);
+  } catch (e) {
+    doneFired = false;
+    btn.disabled = false;
+    btn.textContent = "完成";
+    showToast("提交失败：" + e.message, 4000);
+  }
+}
+
+// ---------- On page close ----------
+function finalizeOnUnload() {
+  if (doneFired) return;
+  clearInterval(heartbeatTimer);
+  try {
+    const blob = new Blob([JSON.stringify(buildPayload())], { type: "application/json" });
+    navigator.sendBeacon("/close", blob);
+  } catch (e) { /* best effort */ }
+}
+window.addEventListener("pagehide", finalizeOnUnload);
+window.addEventListener("beforeunload", finalizeOnUnload);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) sendHeartbeat();
+});
+startBrowserHeartbeat();
+
+function showSuccessAndClose(count) {
+  const overlay = document.createElement("div");
+  overlay.id = "success-overlay";
+  overlay.innerHTML = `
+    <div class="success-card">
+      <div class="success-mark"><span>—</span></div>
+      <h2>已交付</h2>
+      <p class="meta"><b>${count}</b> 条修改意见已发往 Agent</p>
+      <p class="countdown"><span id="cd">3</span> · 自动关闭</p>
+      <p class="manual-hint">未关闭时可手动关闭此页</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  let left = 3;
+  const cd = document.getElementById("cd");
+  const timer = setInterval(() => {
+    left--;
+    if (cd) cd.textContent = left;
+    if (left <= 0) {
+      clearInterval(timer);
+      try { window.open("", "_self"); window.close(); } catch(e) {}
+      try { window.close(); } catch(e) {}
+      setTimeout(() => {
+        const cdLine = document.querySelector(".countdown");
+        if (cdLine) cdLine.textContent = "可手动关闭此页";
+      }, 500);
+    }
+  }, 1000);
+}
+
+// ---------- Clear all ----------
+function clearAll() {
+  if (annotations.length === 0) return showToast("已是空白");
+  openDialog({
+    title: "清空全部修改意见？",
+    body: `当前共有 <strong>${annotations.length}</strong> 条修改意见，清空后会一起移除。`,
+    confirmLabel: "全部清空",
+    cancelLabel: "保留",
+    danger: true,
+  }).then((confirmed) => {
+    if (!confirmed) return;
+    contentEl.querySelectorAll("mark[data-ann-id]").forEach(m => {
+      const parent = m.parentNode;
+      while (m.firstChild) parent.insertBefore(m.firstChild, m);
+      parent.removeChild(m);
+    });
+    contentEl.normalize();
+    annotations = [];
+    nextId = 1;
+    saveLocal();
+    renderSidebar();
+    showToast("已清空");
+  });
+}
+
+// ---------- Selection listener ----------
+document.addEventListener("mouseup", (e) => {
+  lastPointer = { clientX: e.clientX, clientY: e.clientY };
+  if (popup.contains(e.target)) return;
+  setTimeout(() => {
+    const range = getSelectionRange();
+    if (range) {
+      showInitialPopup(range);
+    } else if (popup.style.display === "block" && !popup.querySelector("textarea")) {
+      hidePopup();
+    }
+  }, 10);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") hidePopup();
+});
+
+document.getElementById("save-btn").addEventListener("click", completeAnnotation);
+document.getElementById("clear-btn").addEventListener("click", clearAll);
+
+// ---------- Tiny markdown renderer (CommonMark-ish subset) ----------
+function mdToHtml(src) {
+  src = String(src).replace(/\r\n?/g, "\n");
+
+  // 1. Pull out fenced code blocks first so their contents are untouched
+  const codeBlocks = [];
+  src = src.replace(/```([a-zA-Z0-9_+\-]*)\n([\s\S]*?)```/g, (_m, lang, code) => {
+    const i = codeBlocks.push(`<pre><code${lang ? ` data-lang="${escapeHtml(lang)}"` : ""}>${escapeHtml(code.replace(/\n$/, ""))}</code></pre>`) - 1;
+    return `\u0000CB${i}\u0000`;
+  });
+
+  const lines = src.split("\n");
+  const out = [];
+  let i = 0;
+  let listType = null;   // 'ul' | 'ol' | null
+  let listItems = [];
+  let quoteLines = null; // string[] | null
+  let paraLines = [];
+
+  function flushPara() {
+    if (paraLines.length) {
+      out.push(`<p>${inlineMd(paraLines.join("\n"))}</p>`);
+      paraLines = [];
+    }
+  }
+  function flushList() {
+    if (listType) {
+      out.push(`<${listType}>${listItems.map(it => `<li>${inlineMd(it)}</li>`).join("")}</${listType}>`);
+      listType = null;
+      listItems = [];
+    }
+  }
+  function flushQuote() {
+    if (quoteLines) {
+      out.push(`<blockquote><p>${inlineMd(quoteLines.join(" "))}</p></blockquote>`);
+      quoteLines = null;
+    }
+  }
+  function flushAll() { flushPara(); flushList(); flushQuote(); }
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Code-block placeholder
+    const cb = trimmed.match(/^\u0000CB(\d+)\u0000$/);
+    if (cb) { flushAll(); out.push(codeBlocks[+cb[1]]); i++; continue; }
+
+    // Blank
+    if (!trimmed) { flushAll(); i++; continue; }
+
+    // ATX heading
+    const h = trimmed.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
+    if (h) { flushAll(); out.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`); i++; continue; }
+
+    // Horizontal rule
+    if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) { flushAll(); out.push("<hr>"); i++; continue; }
+
+    // Blockquote
+    if (trimmed.startsWith(">")) {
+      flushPara(); flushList();
+      if (!quoteLines) quoteLines = [];
+      quoteLines.push(trimmed.replace(/^>\s?/, ""));
+      i++; continue;
+    } else if (quoteLines) { flushQuote(); }
+
+    // Unordered list
+    let m = trimmed.match(/^[-*+]\s+(.*)$/);
+    if (m) {
+      flushPara(); flushQuote();
+      if (listType !== "ul") { flushList(); listType = "ul"; }
+      listItems.push(m[1]);
+      i++; continue;
+    }
+
+    // Ordered list
+    m = trimmed.match(/^\d+\.\s+(.*)$/);
+    if (m) {
+      flushPara(); flushQuote();
+      if (listType !== "ol") { flushList(); listType = "ol"; }
+      listItems.push(m[1]);
+      i++; continue;
+    }
+
+    // Paragraph line
+    if (listType) flushList();
+    paraLines.push(line);
+    i++;
+  }
+  flushAll();
+
+  return out.join("\n");
+}
+
+function inlineMd(s) {
+  s = escapeHtml(s);
+  // Inline code
+  s = s.replace(/`([^`\n]+)`/g, (_, c) => `<code>${c}</code>`);
+  // Bold
+  s = s.replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__([^_\n]+?)__/g, "<strong>$1</strong>");
+  // Italic (avoid touching bold leftovers)
+  s = s.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>");
+  s = s.replace(/(^|[^_])_([^_\n]+?)_(?!_)/g, "$1<em>$2</em>");
+  // Strikethrough
+  s = s.replace(/~~([^~\n]+?)~~/g, "<del>$1</del>");
+  // Links [text](url)
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g,
+    (_, t, u) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`);
+  // Bare URLs
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,
+    (_, pre, u) => `${pre}<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+  // Soft line break
+  s = s.replace(/\n/g, "<br>");
+  return s;
+}
+
+// ---------- Init ----------
+const mdSrc = document.getElementById("md-src");
+const proseView = isProseFile(SOURCE_PATH);
+contentWrapEl.classList.toggle("is-code-view", !proseView);
+contentEl.classList.toggle("is-code-view", !proseView);
+contentEl.innerHTML = renderSource(mdSrc ? mdSrc.textContent : "", SOURCE_PATH);
+applyCodeHighlighting();
+initRailResize();
+loadLocal();
+</script>
+
+</body>
+</html>

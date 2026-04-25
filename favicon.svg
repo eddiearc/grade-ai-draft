@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AI Redraft">
+  <rect x="4" y="4" width="54" height="54" rx="8" fill="#faf6ec" stroke="#211b16" stroke-width="4"/>
+  <path d="M10 54h48V10" fill="none" stroke="#211b16" stroke-width="4" stroke-linecap="round"/>
+  <rect x="14" y="12" width="30" height="40" rx="4" fill="#fbf3e3" stroke="#211b16" stroke-width="3"/>
+  <path d="M20 24h17M20 32h14M20 40h10" fill="none" stroke="#211b16" stroke-width="3" stroke-linecap="round"/>
+  <path d="M41 45c4-8 8-14 15-21" fill="none" stroke="#d8b600" stroke-width="6" stroke-linecap="round"/>
+  <path d="M36 52c3-.8 5.2-1.7 7.4-3.1l-5-4.2c-.8 2.2-1.5 4.5-2.4 7.3Z" fill="#211b16"/>
+  <circle cx="49" cy="18" r="5" fill="#ffd84d" stroke="#211b16" stroke-width="3"/>
+</svg>
