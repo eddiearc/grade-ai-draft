@@ -1248,6 +1248,10 @@ function wireMark(mark, annId) {
   mark.addEventListener("click", () => scrollToCard(annId));
 }
 
+function isMarkableTextSegment(text) {
+  return text.replace(/[\s\u00a0\u200b-\u200d\ufeff]/g, "").length > 0;
+}
+
 // Wrap a range that may span across multiple elements (h1, p, strong, etc).
 // Walks through every text node intersecting the range and wraps the
 // intersected portion with its own <mark>; only the first one shows the
@@ -1281,6 +1285,7 @@ function wrapRangeWithMark(range, annId, seq, opts = {}) {
     const middle = text.slice(start, end);
     const after = text.slice(end);
     if (!middle) return;
+    if (!isMarkableTextSegment(middle)) return;
 
     const mark = document.createElement("mark");
     if (opts.pending) {
