@@ -6,6 +6,12 @@
 
 Repository: <https://github.com/eddiearc/grade-ai-draft>
 
+## 界面预览
+
+先在网页里把问题圈出来，把判断写在原文旁边。
+
+![批改作业桌面界面：正文高亮和右侧修改意见栏](assets/grade-ai-draft-desktop.png)
+
 ## 使用场景
 
 - AI 生成了一篇稿子，但你想像老师批改作业一样逐句指出问题
